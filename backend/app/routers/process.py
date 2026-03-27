@@ -13,8 +13,8 @@ async def process_file(file: UploadFile = File(...)):
     # THIS IS WHERE YOU USE IT
     raw_chunks = parse_document_chunks(file.filename, file_bytes)
 
-    cleaned = [clean_text(chunk) for chunk in raw_chunks]
-    final_chunks = chunk_text(cleaned)
+    # cleaned = [clean_text(chunk) for chunk in raw_chunks]
+    final_chunks = chunk_text(raw_chunks)
 
     return {
         "filename": file.filename,

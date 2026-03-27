@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import documents
 from app.routers import generate as generate_router
+from app.routers.process import router as process_router
 
 from dotenv import load_dotenv
 import os
@@ -26,6 +27,7 @@ app.add_middleware(
 # Routers
 app.include_router(documents.router, prefix="/api", tags=["documents"])
 app.include_router(generate_router.router, prefix="/api", tags=["generate"])
+app.include_router(process_router, prefix="/api", tags=["process"])
 
 @app.get("/health")
 def health_check():
@@ -33,7 +35,3 @@ def health_check():
         "status": "ok",
         "message": "Smart Revision Generator API is running"
     }
-
-from app.routers.process import router as process_router
-
-app.include_router(process_router)

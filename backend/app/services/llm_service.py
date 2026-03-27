@@ -1,50 +1,35 @@
 """
-llm_service.py — Google Gemini integration for the Smart Revision Generator.
-
-v2 update: retrieval-augmented generation (RAG).
-All four generation functions now optionally accept a doc_id. When
-provided they fetch the top-k relevant chunks from the FAISS index and
-inject them as grounded context before the LLM prompt — preventing
-hallucination and keeping answers faithful to the source material.
-
-If doc_id is None (or the index doesn't exist yet), the functions fall
-back to the full raw text passed in, preserving backward compatibility.
+llm_service.py — Google Gemini integration.
+v2: RAG support + full error logging so the real exception is always visible.
 """
 
 import json
 import logging
 import os
 import re
+import traceback
 from typing import Any
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 import google.generativeai as genai
 from fastapi import HTTPException
 
 from app.services.prompts import SYSTEM_PROMPT, build_prompt
 
 load_dotenv()
-
 logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# SDK initialisation
-# ---------------------------------------------------------------------------
 
 _API_KEY = os.getenv("GOOGLE_API_KEY")
 if not _API_KEY:
     raise RuntimeError(
-        "GOOGLE_API_KEY environment variable is not set. "
-        "Add it to your .env file and restart."
+        "GOOGLE_API_KEY is not set. Add it to your .env file and restart."
     )
 
 genai.configure(api_key=_API_KEY)
 
-# ---------------------------------------------------------------------------
-# Model configuration
-# ---------------------------------------------------------------------------
-
-_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-1.5-pro")
+# Use flash for development — much faster and cheaper than pro
+# Change to gemini-1.5-pro in .env when you need higher quality output
+_MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 
 _GENERATION_CONFIG = genai.GenerationConfig(
     temperature=0.4,
@@ -63,10 +48,6 @@ _SAFETY_SETTINGS = [
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
 
 
-# ---------------------------------------------------------------------------
-# Private helpers
-# ---------------------------------------------------------------------------
-
 def _get_model() -> genai.GenerativeModel:
     return genai.GenerativeModel(
         model_name=_MODEL_NAME,
@@ -84,136 +65,79 @@ def _extract_json(raw: str) -> Any:
     except json.JSONDecodeError as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"LLM returned invalid JSON: {exc}. Raw: {raw[:300]}"
+            detail=f"LLM returned invalid JSON: {exc}. Raw: {raw[:500]}"
         )
 
 
 def _get_rag_context(doc_id: str | None, query: str) -> str | None:
-    """
-    Try to retrieve relevant chunks for RAG.
-    Returns None silently if doc_id is absent or index doesn't exist.
-    """
     if not doc_id:
         return None
     try:
         from app.services.retriever import retrieve_context_string
         from app.services.vector_store import VectorStore
         if not VectorStore.exists(doc_id):
-            logger.debug("No FAISS index for doc_id=%s — using raw text", doc_id)
             return None
-        ctx = retrieve_context_string(doc_id, query, k=RAG_TOP_K)
-        logger.debug("RAG context fetched (%d chars)", len(ctx))
-        return ctx
+        return retrieve_context_string(doc_id, query, k=RAG_TOP_K)
     except Exception as exc:
-        logger.warning("RAG retrieval failed (%s) — falling back to raw text", exc)
+        logger.warning("RAG retrieval failed (%s) — using raw text", exc)
         return None
 
 
-# ---------------------------------------------------------------------------
-# Core generation functions
-# ---------------------------------------------------------------------------
-
 def generate_text(prompt: str) -> str:
-    """Send a prompt to Gemini and return raw text."""
+    """Send a prompt to Gemini and return raw text. Logs the full traceback on failure."""
     try:
-        model    = _get_model()
-        response = model.generate_content(prompt)
+        logger.info("Calling Gemini model=%s prompt_chars=%d", _MODEL_NAME, len(prompt))
+        response = _get_model().generate_content(prompt)
+
         if not response.candidates:
+            feedback = getattr(response, "prompt_feedback", "none")
+            logger.error("Gemini returned no candidates. feedback=%s", feedback)
             raise HTTPException(
                 status_code=422,
-                detail="Gemini blocked the response (safety filter).",
+                detail=f"Gemini blocked the response. Feedback: {feedback}",
             )
+
+        logger.info("Gemini OK — response_chars=%d", len(response.text))
         return response.text
+
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Gemini API error: {exc}")
+        logger.error("Gemini API call failed:\n%s", traceback.format_exc())
+        raise HTTPException(
+            status_code=502,
+            detail=f"Gemini API error [{type(exc).__name__}]: {exc}"
+        )
 
 
 def generate_json(prompt: str) -> Any:
-    """Send a prompt to Gemini and return a parsed Python object."""
     return _extract_json(generate_text(prompt))
 
 
-# ---------------------------------------------------------------------------
-# Task-level wrappers with RAG support
-# ---------------------------------------------------------------------------
-
-def generate_summary(
-    text: str,
-    difficulty: str = "Intermediate",
-    doc_id: str | None = None,
-) -> str:
-    """Return a Markdown summary string, optionally RAG-grounded."""
-    rag_ctx = _get_rag_context(doc_id, query="key concepts core ideas summary")
-    content = rag_ctx if rag_ctx else text
-    prompt  = build_prompt("summary", content, difficulty=difficulty)
+def generate_summary(text: str, difficulty: str = "Intermediate", doc_id: str | None = None) -> str:
+    ctx     = _get_rag_context(doc_id, "key concepts core ideas summary")
+    prompt  = build_prompt("summary", ctx or text, difficulty=difficulty)
     return generate_text(prompt)
 
 
-def generate_flashcards(
-    text: str,
-    difficulty: str = "Intermediate",
-    num_cards: int = 15,
-    doc_id: str | None = None,
-) -> dict:
-    """Return parsed flashcard JSON dict, optionally RAG-grounded."""
-    rag_ctx = _get_rag_context(doc_id, query="key terms definitions concepts vocabulary")
-    content = rag_ctx if rag_ctx else text
-    prompt  = build_prompt("flashcard", content, difficulty=difficulty, num_cards=num_cards)
+def generate_flashcards(text: str, difficulty: str = "Intermediate", num_cards: int = 15, doc_id: str | None = None) -> dict:
+    ctx    = _get_rag_context(doc_id, "key terms definitions concepts vocabulary")
+    prompt = build_prompt("flashcard", ctx or text, difficulty=difficulty, num_cards=num_cards)
     return generate_json(prompt)
 
 
-def generate_faqs(
-    text: str,
-    difficulty: str = "Intermediate",
-    num_faqs: int = 10,
-    doc_id: str | None = None,
-) -> dict:
-    """Return parsed FAQ JSON dict, optionally RAG-grounded."""
-    rag_ctx = _get_rag_context(doc_id, query="common questions student misconceptions how why")
-    content = rag_ctx if rag_ctx else text
-    prompt  = build_prompt("faq", content, difficulty=difficulty, num_faqs=num_faqs)
+def generate_faqs(text: str, difficulty: str = "Intermediate", num_faqs: int = 10, doc_id: str | None = None) -> dict:
+    ctx    = _get_rag_context(doc_id, "common questions student misconceptions how why")
+    prompt = build_prompt("faq", ctx or text, difficulty=difficulty, num_faqs=num_faqs)
     return generate_json(prompt)
 
 
-def generate_mock_quiz(
-    text: str,
-    difficulty: str = "Intermediate",
-    question_type: str = "mcq",
-    num_questions: int = 5,
-    doc_id: str | None = None,
-) -> dict:
-    """Return parsed mock quiz JSON dict, optionally RAG-grounded."""
+def generate_mock_quiz(text: str, difficulty: str = "Intermediate", question_type: str = "mcq", num_questions: int = 5, doc_id: str | None = None) -> dict:
     query_map = {
         "mcq":          "exam questions multiple choice test assessment",
         "short_answer": "short answer exam questions explain describe",
         "long_answer":  "essay questions analysis evaluation deep understanding",
     }
-    rag_ctx = _get_rag_context(doc_id, query=query_map.get(question_type, "exam questions"))
-    content = rag_ctx if rag_ctx else text
-    prompt  = build_prompt(
-        "mock_quiz", content,
-        difficulty=difficulty,
-        question_type=question_type,
-        num_questions=num_questions,
-    )
+    ctx    = _get_rag_context(doc_id, query_map.get(question_type, "exam questions"))
+    prompt = build_prompt("mock_quiz", ctx or text, difficulty=difficulty, question_type=question_type, num_questions=num_questions)
     return generate_json(prompt)
-
-
-# ---------------------------------------------------------------------------
-# Smoke test  (python -m app.services.llm_service)
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    sample = (
-        "Machine learning is a subset of artificial intelligence that enables "
-        "systems to learn from data. Supervised learning uses labelled examples; "
-        "unsupervised learning finds hidden patterns without labels."
-    )
-    print(f"Model: {_MODEL_NAME}")
-    summary = generate_summary(sample, difficulty="Basic")
-    print(summary[:300])
-    cards = generate_flashcards(sample, num_cards=2)
-    print(json.dumps(cards, indent=2))
-    print("=== passed ===")
