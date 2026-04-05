@@ -68,12 +68,12 @@ export default function SummaryPage() {
       headerRight={headerRight}
     >
       {query.data?.summary && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-8 py-6 prose prose-sm max-w-none
-            prose-headings:text-indigo-900 prose-headings:font-bold
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="px-8 py-6 prose prose-sm max-w-none dark:prose-invert
+            prose-headings:text-indigo-900 dark:prose-headings:text-indigo-300 prose-headings:font-bold
             prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
-            prose-p:text-gray-600 prose-p:leading-relaxed
-            prose-li:text-gray-600 prose-strong:text-gray-800
+            prose-p:text-gray-600 dark:prose-p:text-gray-300 prose-p:leading-relaxed
+            prose-li:text-gray-600 dark:prose-li:text-gray-300 prose-strong:text-gray-800 dark:prose-strong:text-gray-100
             prose-ul:space-y-1 prose-ol:space-y-1">
             <ReactMarkdown>{query.data.summary}</ReactMarkdown>
           </div>

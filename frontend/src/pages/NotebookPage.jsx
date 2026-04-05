@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useNotebooks } from '../context/NotebookContext'
+import { useAuth } from '../context/AuthContext'
 import { uploadDocument } from '../api/apiService'
 import axios from 'axios'
 import {
   BookOpen, Plus, Trash2, Send, ChevronLeft, FileText, Loader2,
   Sparkles, MessageSquare, Layers, HelpCircle, PenSquare,
-  Upload, X, CheckCircle, AlignLeft, Bot, User
+  Upload, X, CheckCircle, AlignLeft, Bot, User, Sun, Moon
 } from 'lucide-react'
 
 const API = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000' })
@@ -49,10 +50,10 @@ function ResourcePanel({ notebook, onAddDoc, onRemoveDoc, selectedDocId, onSelec
   }
 
   return (
-    <div className="w-64 flex-shrink-0 border-r border-gray-200 bg-white flex flex-col h-full">
-      <div className="px-4 pt-5 pb-3 border-b border-gray-100">
-        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Sources</h2>
-        <p className="text-xs text-gray-400">{notebook?.documents?.length || 0} document{notebook?.documents?.length !== 1 ? 's' : ''}</p>
+    <div className="w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col h-full">
+      <div className="px-4 pt-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+        <h2 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Sources</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-500">{notebook?.documents?.length || 0} document{notebook?.documents?.length !== 1 ? 's' : ''}</p>
       </div>
 
       {/* Document list */}
@@ -62,16 +63,16 @@ function ResourcePanel({ notebook, onAddDoc, onRemoveDoc, selectedDocId, onSelec
             onClick={() => onSelectDoc(doc.doc_id)}
             className={`group mx-2 mb-1 px-3 py-2.5 rounded-xl cursor-pointer transition-colors flex items-start gap-2
               ${selectedDocId === doc.doc_id
-                ? 'bg-violet-50 border border-violet-200'
-                : 'hover:bg-gray-50 border border-transparent'
+                ? 'bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800'
+                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-transparent'
               }`}>
-            <FileText className={`w-4 h-4 mt-0.5 flex-shrink-0 ${selectedDocId === doc.doc_id ? 'text-violet-500' : 'text-gray-400'}`} />
+            <FileText className={`w-4 h-4 mt-0.5 flex-shrink-0 ${selectedDocId === doc.doc_id ? 'text-violet-500' : 'text-gray-400 dark:text-gray-500'}`} />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-700 truncate">{doc.filename}</p>
-              <p className="text-xs text-gray-400">{(doc.word_count || 0).toLocaleString()} words</p>
+              <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">{doc.filename}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{(doc.word_count || 0).toLocaleString()} words</p>
             </div>
             <button onClick={e => { e.stopPropagation(); onRemoveDoc(doc.doc_id) }}
-              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:text-red-400 text-gray-300 transition-opacity flex-shrink-0">
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:text-red-400 text-gray-300 dark:text-gray-600 transition-opacity flex-shrink-0">
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -79,34 +80,34 @@ function ResourcePanel({ notebook, onAddDoc, onRemoveDoc, selectedDocId, onSelec
 
         {!notebook?.documents?.length && !uploading && (
           <div className="px-4 py-6 text-center">
-            <FileText className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-            <p className="text-xs text-gray-400">No sources yet</p>
-            <p className="text-xs text-gray-300 mt-1">Upload a PDF, DOCX, or PPTX</p>
+            <FileText className="w-8 h-8 text-gray-200 dark:text-gray-700 mx-auto mb-2" />
+            <p className="text-xs text-gray-400 dark:text-gray-500">No sources yet</p>
+            <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">Upload a PDF, DOCX, or PPTX</p>
           </div>
         )}
 
         {uploading && (
-          <div className="mx-2 px-3 py-2.5 rounded-xl bg-violet-50 border border-violet-200 flex items-center gap-2">
+          <div className="mx-2 px-3 py-2.5 rounded-xl bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800 flex items-center gap-2">
             <Loader2 className="w-4 h-4 text-violet-500 animate-spin flex-shrink-0" />
-            <span className="text-xs text-violet-600">Uploading...</span>
+            <span className="text-xs text-violet-600 dark:text-violet-400">Uploading...</span>
           </div>
         )}
       </div>
 
       {/* Upload area */}
-      <div className="p-3 border-t border-gray-100">
+      <div className="p-3 border-t border-gray-100 dark:border-gray-700">
         <div
           onDragOver={e => { e.preventDefault(); setDragOver(true) }}
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
           onClick={() => inputRef.current?.click()}
           className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors
-            ${dragOver ? 'border-violet-400 bg-violet-50' : 'border-gray-200 hover:border-violet-300 hover:bg-violet-50/50'}`}>
+            ${dragOver ? 'border-violet-400 bg-violet-50 dark:bg-violet-900/30' : 'border-gray-200 dark:border-gray-600 hover:border-violet-300 hover:bg-violet-50/50 dark:hover:bg-violet-900/30'}`}>
           <input ref={inputRef} type="file" accept=".pdf,.docx,.pptx" className="hidden"
             onChange={e => handleFile(e.target.files[0])} />
-          <Upload className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-          <p className="text-xs text-gray-400">Drop file or click</p>
-          <p className="text-xs text-gray-300 mt-0.5">PDF · DOCX · PPTX</p>
+          <Upload className="w-4 h-4 text-gray-400 dark:text-gray-500 mx-auto mb-1" />
+          <p className="text-xs text-gray-400 dark:text-gray-500">Drop file or click</p>
+          <p className="text-xs text-gray-300 dark:text-gray-600 mt-0.5">PDF · DOCX · PPTX</p>
         </div>
       </div>
     </div>
@@ -167,13 +168,13 @@ function ChatPanel({ docId, docName }) {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-gray-50 min-w-0">
+    <div className="flex-1 flex flex-col h-full bg-gray-50 dark:bg-gray-900 min-w-0">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 bg-white flex items-center gap-3">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center gap-3">
         <MessageSquare className="w-4 h-4 text-violet-500" />
         <div>
-          <h2 className="text-sm font-semibold text-gray-800">Chat</h2>
-          {docId && <p className="text-xs text-gray-400 truncate max-w-xs">{docName}</p>}
+          <h2 className="text-sm font-semibold text-gray-800 dark:text-white">Chat</h2>
+          {docId && <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">{docName}</p>}
         </div>
       </div>
 
@@ -182,7 +183,7 @@ function ChatPanel({ docId, docName }) {
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center
-              ${msg.role === 'user' ? 'bg-violet-500' : 'bg-white border border-gray-200'}`}>
+              ${msg.role === 'user' ? 'bg-violet-500' : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600'}`}>
               {msg.role === 'user'
                 ? <User className="w-3.5 h-3.5 text-white" />
                 : <Bot className="w-3.5 h-3.5 text-violet-500" />
@@ -191,7 +192,7 @@ function ChatPanel({ docId, docName }) {
             <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed
               ${msg.role === 'user'
                 ? 'bg-violet-500 text-white rounded-tr-sm'
-                : 'bg-white border border-gray-200 text-gray-700 rounded-tl-sm shadow-sm'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-tl-sm shadow-sm'
               }`}>
               {msg.content}
             </div>
@@ -200,11 +201,11 @@ function ChatPanel({ docId, docName }) {
 
         {loading && (
           <div className="flex gap-3">
-            <div className="flex-shrink-0 w-7 h-7 rounded-full bg-white border border-gray-200
+            <div className="flex-shrink-0 w-7 h-7 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600
               flex items-center justify-center">
               <Bot className="w-3.5 h-3.5 text-violet-500" />
             </div>
-            <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
               <div className="flex gap-1 items-center h-4">
                 <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -217,9 +218,9 @@ function ChatPanel({ docId, docName }) {
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-white border-t border-gray-200">
-        <div className={`flex gap-2 bg-gray-50 rounded-2xl border transition-colors px-4 py-2
-          ${docId ? 'border-gray-200 focus-within:border-violet-300 focus-within:bg-white' : 'border-gray-100 opacity-60'}`}>
+      <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <div className={`flex gap-2 bg-gray-50 dark:bg-gray-700 rounded-2xl border transition-colors px-4 py-2
+          ${docId ? 'border-gray-200 dark:border-gray-600 focus-within:border-violet-300 focus-within:bg-white dark:focus-within:bg-gray-700' : 'border-gray-100 dark:border-gray-700 opacity-60'}`}>
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -227,19 +228,19 @@ function ChatPanel({ docId, docName }) {
             placeholder={docId ? 'Ask anything about this document...' : 'Select a document first'}
             disabled={!docId || loading}
             rows={1}
-            className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400
+            className="flex-1 bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
               outline-none resize-none leading-relaxed py-1"
           />
           <button onClick={send} disabled={!input.trim() || !docId || loading}
             className={`self-end mb-0.5 p-1.5 rounded-xl transition-all
               ${input.trim() && docId && !loading
                 ? 'bg-violet-500 text-white hover:bg-violet-600 shadow-sm'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-400 cursor-not-allowed'
               }`}>
             <Send className="w-3.5 h-3.5" />
           </button>
         </div>
-        <p className="text-xs text-gray-300 mt-1.5 text-center">Enter to send · Shift+Enter for new line</p>
+        <p className="text-xs text-gray-300 dark:text-gray-600 mt-1.5 text-center">Enter to send · Shift+Enter for new line</p>
       </div>
     </div>
   )
@@ -293,10 +294,10 @@ function ToolsPanel({ notebookId, docId, docName }) {
   }
 
   return (
-    <div className="w-64 flex-shrink-0 border-l border-gray-200 bg-white flex flex-col h-full">
-      <div className="px-4 pt-5 pb-3 border-b border-gray-100">
-        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Study Tools</h2>
-        <p className="text-xs text-gray-400">Generate from selected source</p>
+    <div className="w-64 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col h-full">
+      <div className="px-4 pt-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+        <h2 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Study Tools</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-500">Generate from selected source</p>
       </div>
 
       <div className="flex-1 p-3 space-y-2 overflow-y-auto">
@@ -305,15 +306,15 @@ function ToolsPanel({ notebookId, docId, docName }) {
           return (
             <button key={id} onClick={() => handleTool(id)}
               className={`w-full text-left border rounded-xl p-4 transition-all duration-150
-                ${docId ? `border-gray-200 ${c.hover} bg-white hover:shadow-sm` : 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'}
+                ${docId ? `border-gray-200 dark:border-gray-700 ${c.hover} dark:${c.hover.replace('hover:', 'hover:dark:')} bg-white dark:bg-gray-700 hover:shadow-sm` : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 opacity-50 cursor-not-allowed'}
               `}>
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${c.bg}`}>
+                <div className={`p-2 rounded-lg ${c.bg} dark:bg-opacity-20`}>
                   <Icon className={`w-4 h-4 ${c.icon}`} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-800">{label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                  <p className="text-sm font-semibold text-gray-800 dark:text-white">{label}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{desc}</p>
                 </div>
               </div>
             </button>
@@ -322,9 +323,9 @@ function ToolsPanel({ notebookId, docId, docName }) {
       </div>
 
       {!docId && (
-        <div className="p-4 border-t border-gray-100">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-            <p className="text-xs text-amber-700 font-medium">
+        <div className="p-4 border-t border-gray-100 dark:border-gray-700">
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-xl p-3">
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
               Select a source document to enable study tools
             </p>
           </div>
@@ -332,13 +333,13 @@ function ToolsPanel({ notebookId, docId, docName }) {
       )}
 
       {docId && (
-        <div className="p-4 border-t border-gray-100">
-          <div className="bg-violet-50 border border-violet-200 rounded-xl p-3">
+        <div className="p-4 border-t border-gray-100 dark:border-gray-700">
+          <div className="bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800 rounded-xl p-3">
             <div className="flex items-start gap-2">
               <CheckCircle className="w-3.5 h-3.5 text-violet-500 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-xs text-violet-700 font-medium">Source selected</p>
-                <p className="text-xs text-violet-500 truncate mt-0.5">{docName}</p>
+                <p className="text-xs text-violet-700 dark:text-violet-400 font-medium">Source selected</p>
+                <p className="text-xs text-violet-500 dark:text-violet-500 truncate mt-0.5">{docName}</p>
               </div>
             </div>
           </div>
@@ -352,6 +353,7 @@ function ToolsPanel({ notebookId, docId, docName }) {
 export default function NotebookPage() {
   const { notebookId } = useParams()
   const { getNotebook, addDocument, removeDocument } = useNotebooks()
+  const { darkMode, toggleDarkMode } = useAuth()
   const navigate = useNavigate()
   const notebook = getNotebook(notebookId)
 
@@ -384,23 +386,28 @@ export default function NotebookPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden"
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden"
       style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
 
       {/* Top bar */}
-      <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-4 flex-shrink-0">
-        <Link to="/" className="flex items-center gap-1.5 text-gray-400 hover:text-violet-500
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center gap-4 flex-shrink-0">
+        <Link to="/" className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500 hover:text-violet-500 dark:hover:text-violet-400
           text-sm transition-colors">
           <ChevronLeft className="w-4 h-4" />
           <BookOpen className="w-4 h-4" />
         </Link>
-        <div className="w-px h-4 bg-gray-200" />
-        <h1 className="text-sm font-semibold text-gray-800 truncate">{notebook.name}</h1>
+        <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+        <h1 className="text-sm font-semibold text-gray-800 dark:text-white truncate">{notebook.name}</h1>
         <div className="flex-1" />
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
           <Sparkles className="w-3.5 h-3.5 text-violet-400" />
           <span>AI-powered study assistant</span>
         </div>
+        <button onClick={toggleDarkMode}
+          className="p-2 rounded-xl border border-gray-200 dark:border-gray-700
+            hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400">
+          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
       </header>
 
       {/* 3-panel body */}

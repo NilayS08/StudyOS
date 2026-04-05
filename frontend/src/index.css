@@ -1,8 +1,11 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+/* Enable class-based dark mode (Tailwind v4 uses @variant) */
+@variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-primary-50: #eef0ff;
+  --color-primary-50:  #eef0ff;
   --color-primary-100: #dde1ff;
   --color-primary-500: #6B4EFF;
   --color-primary-600: #5a3de8;
@@ -10,7 +13,16 @@
   --color-primary-900: #1E1B4B;
 }
 
+html {
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
 body {
-  font-family: 'Inter', system-ui, sans-serif;
   background-color: #f8f9ff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+html.dark body {
+  background-color: #030712;  /* gray-950 */
+  color: #f9fafb;
 }

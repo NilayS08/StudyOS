@@ -1,11 +1,8 @@
 """
-generate.py — FastAPI router for LLM-powered generation endpoints.
-
-v2: passes doc_id to every llm_service function so RAG context
-is used automatically when the FAISS index is ready.
+generate.py — LLM-powered generation endpoints with rate limiting.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.services.llm_service import (
@@ -14,10 +11,10 @@ from app.services.llm_service import (
     generate_mock_quiz,
     generate_summary,
 )
+from app.middleware.rate_limit import limiter, LIMIT_GENERATE
 
 router = APIRouter()
 
-# In-memory text store (keyed by doc_id, written by documents.py after upload)
 DOC_STORE: dict[str, str] = {}
 
 
@@ -30,10 +27,6 @@ def _get_text(doc_id: str) -> str:
         )
     return text
 
-
-# ---------------------------------------------------------------------------
-# Request schemas
-# ---------------------------------------------------------------------------
 
 class SummarizeRequest(BaseModel):
     doc_id: str
@@ -59,19 +52,17 @@ class MockQuizRequest(BaseModel):
     num_questions: int = Field(default=5, ge=3, le=15)
 
 
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
-
 @router.post("/summarize")
-async def summarize(req: SummarizeRequest):
+@limiter.limit(LIMIT_GENERATE)
+async def summarize(request: Request, req: SummarizeRequest):
     text    = _get_text(req.doc_id)
     summary = generate_summary(text, difficulty=req.difficulty, doc_id=req.doc_id)
     return {"doc_id": req.doc_id, "difficulty": req.difficulty, "summary": summary}
 
 
 @router.post("/flashcards")
-async def flashcards(req: FlashcardRequest):
+@limiter.limit(LIMIT_GENERATE)
+async def flashcards(request: Request, req: FlashcardRequest):
     text   = _get_text(req.doc_id)
     result = generate_flashcards(
         text, difficulty=req.difficulty,
@@ -81,7 +72,8 @@ async def flashcards(req: FlashcardRequest):
 
 
 @router.post("/faq")
-async def faq(req: FAQRequest):
+@limiter.limit(LIMIT_GENERATE)
+async def faq(request: Request, req: FAQRequest):
     text   = _get_text(req.doc_id)
     result = generate_faqs(
         text, difficulty=req.difficulty,
@@ -91,7 +83,8 @@ async def faq(req: FAQRequest):
 
 
 @router.post("/mock-quiz")
-async def mock_quiz(req: MockQuizRequest):
+@limiter.limit(LIMIT_GENERATE)
+async def mock_quiz(request: Request, req: MockQuizRequest):
     valid_types = {"mcq", "short_answer", "long_answer"}
     if req.question_type not in valid_types:
         raise HTTPException(

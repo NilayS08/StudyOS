@@ -1,12 +1,12 @@
 """
-backend/app/routers/chat.py — Chat with document endpoint.
+chat.py — Chat with document endpoint, with rate limiting.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from app.services.llm_service import generate_text
-from app.services.prompts import SYSTEM_PROMPT
+from app.middleware.rate_limit import limiter, LIMIT_CHAT
 
 router = APIRouter()
 
@@ -14,7 +14,7 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     doc_id: str
     message: str
-    history: list[dict] = []   # [{"role": "user"|"assistant", "content": "..."}]
+    history: list[dict] = []
 
 
 CHAT_PROMPT = """You are an expert tutor helping a student understand a document.
@@ -35,8 +35,8 @@ Keep answers concise (2-4 paragraphs max) unless the student asks for a detailed
 
 
 @router.post("/chat")
-async def chat_with_document(req: ChatRequest):
-    # Get document text from DOC_STORE
+@limiter.limit(LIMIT_CHAT)
+async def chat_with_document(request: Request, req: ChatRequest):
     from app.routers.generate import DOC_STORE
     text = DOC_STORE.get(req.doc_id)
     if not text:
@@ -45,7 +45,6 @@ async def chat_with_document(req: ChatRequest):
             detail=f"Document '{req.doc_id}' not found. Please upload it first.",
         )
 
-    # Try RAG context first, fall back to full text (truncated)
     context = None
     try:
         from app.services.retriever import retrieve_context_string
@@ -56,11 +55,10 @@ async def chat_with_document(req: ChatRequest):
         pass
 
     if not context:
-        context = text[:6000]  # fallback: first 6000 chars
+        context = text[:6000]
 
-    # Format history
     history_str = ""
-    for msg in req.history[-6:]:  # last 6 messages for context window
+    for msg in req.history[-6:]:
         role = msg.get("role", "user")
         content = msg.get("content", "")
         history_str += f"{role.capitalize()}: {content}\n"

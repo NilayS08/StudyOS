@@ -20,15 +20,21 @@ typing-extensions==4.14.0
 # LLM
 google-generativeai==0.7.2
 
-# ── NEW: Embedding + Vector Store ─────────────────────────────────────────
-sentence-transformers==3.0.1   # all-MiniLM-L6-v2 embedding model
-faiss-cpu==1.8.0               # vector similarity search (CPU build)
-numpy>=1.26,<2.0               # array ops; faiss requires <2.0
+# Embedding + Vector Store
+sentence-transformers==3.0.1
+faiss-cpu==1.8.0
+numpy>=1.26,<2.0
+
+# ── NEW: Authentication ─────────────────────────────────────────────────────
+python-jose[cryptography]==3.3.0   # JWT encoding/decoding
+httpx==0.28.0                     # Async HTTP for Google OAuth token exchange
+
+# ── NEW: Rate Limiting ──────────────────────────────────────────────────────
+slowapi==0.1.9                      # Rate limiting middleware for FastAPI
 
 # Testing
 pytest==8.2.2
 pytest-asyncio==0.23.7
-httpx==0.28.0
 
 # Utilities
 aiofiles==23.2.1
