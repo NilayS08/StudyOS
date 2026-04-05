@@ -4,6 +4,27 @@ const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
 })
 
+// Attach JWT Bearer token to every outgoing request
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem('srg_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// Handle 401 (expired token) globally — redirect to login
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('srg_token')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
 export const uploadDocument = (formData) => API.post('/api/upload', formData)
 
 export const getSummary = (docId, difficulty = 'Intermediate') =>

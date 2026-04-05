@@ -14,23 +14,23 @@ function FlipCard({ front, back, topic }) {
       <div className="relative w-full h-full transition-transform duration-500"
         style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
         {/* Front */}
-        <div className="absolute inset-0 bg-white rounded-2xl border border-gray-200 shadow-sm
+        <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm
           flex flex-col items-center justify-center p-6 text-center"
           style={{ backfaceVisibility: 'hidden' }}>
           {topic && (
-            <span className="absolute top-3 right-3 text-xs bg-violet-50 text-violet-500
+            <span className="absolute top-3 right-3 text-xs bg-violet-50 dark:bg-violet-900/50 text-violet-500 dark:text-violet-300
               px-2 py-0.5 rounded-full font-medium">{topic}</span>
           )}
           <p className="text-xs font-bold text-violet-400 uppercase tracking-widest mb-3">Term</p>
-          <p className="text-base font-semibold text-gray-800 leading-snug">{front}</p>
-          <p className="absolute bottom-3 text-xs text-gray-300">click to flip</p>
+          <p className="text-base font-semibold text-gray-800 dark:text-white leading-snug break-words">{front}</p>
+          <p className="absolute bottom-3 text-xs text-gray-300 dark:text-gray-600">click to flip</p>
         </div>
         {/* Back */}
         <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-2xl shadow-sm
-          flex flex-col items-center justify-center p-6 text-center"
+          flex flex-col items-center justify-center p-6 text-center overflow-hidden"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
           <p className="text-xs font-bold text-violet-200 uppercase tracking-widest mb-3">Definition</p>
-          <p className="text-sm text-white leading-relaxed">{back}</p>
+          <p className="text-sm text-white leading-relaxed break-words overflow-auto max-h-full">{back}</p>
         </div>
       </div>
     </div>
@@ -108,7 +108,7 @@ export default function FlashcardsPage() {
       {cards.length > 0 && (
         <>
           <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-gray-500">{cards.length} cards · click any card to reveal definition</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{cards.length} cards · click any card to reveal definition</p>
             <button onClick={() => { query.refetch(); setCurrent(0) }}
               className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-violet-500 transition-colors">
               <RotateCcw className="w-3.5 h-3.5" /> Regenerate
