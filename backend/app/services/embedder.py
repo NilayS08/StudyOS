@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 MODEL_NAME = os.getenv("EMBED_MODEL", "all-MiniLM-L6-v2")
-EMBED_DIM  = 384   # dimensionality for all-MiniLM-L6-v2
+EMBED_DIM  = 384   
 
 # Batch size for encoding — keep low on CPU to avoid OOM
 ENCODE_BATCH_SIZE = int(os.getenv("EMBED_BATCH_SIZE", "32"))
