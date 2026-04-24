@@ -265,10 +265,27 @@ const query = useQuery({
 - Use Tailwind utility classes for styling
 - Custom colors defined in `tailwind.config.js` (e.g., `primary-500`, `primary-600`)
 - Use `prose` class from `@tailwindcss/typography` for markdown content
+- Dark mode uses `dark:` variants (e.g., `dark:bg-gray-800`) — see Dark Mode section below
 
 ```jsx
-<div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-  <div className="px-8 py-6 prose prose-sm max-w-none">
+<div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+  <div className="px-8 py-6 prose prose-sm max-w-none dark:prose-invert">
+```
+
+**Dark Mode:**
+- Tailwind dark mode is configured with `darkMode: 'class'` in `tailwind.config.js`
+- Dark mode state is managed in `AuthContext` with `darkMode` and `toggleDarkMode`
+- Use `dark:` prefix for all dark mode variants (e.g., `dark:bg-gray-900`, `dark:text-white`)
+- For prose/markdown content, use `dark:prose-invert` for automatic text color inversion
+- When updating existing components, ensure both light and dark variants are added
+
+```jsx
+import { useAuth } from '../context/AuthContext'
+// In component:
+const { darkMode, toggleDarkMode } = useAuth()
+
+// Button with dark mode:
+<button className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white">
 ```
 
 **Naming:**

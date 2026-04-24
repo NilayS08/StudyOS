@@ -56,6 +56,6 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
 # ---------------------------------------------------------------------------
 
 LIMIT_CHAT       = "10/minute"     # chat is expensive (Gemini call)
-LIMIT_GENERATE   = "5/minute"      # summarize / flashcards / faq / quiz
+LIMIT_GENERATE   = "30/minute"      # summarize / flashcards / faq / quiz
 LIMIT_UPLOAD     = "20/hour"       # file uploads
 LIMIT_AUTH       = "20/minute"     # login callbacks
