@@ -22,11 +22,11 @@ export default function App() {
         <NotebookProvider>
           <BrowserRouter>
             <Routes>
-              {/* Public routes */}
+              {/* Public Routes */}
               <Route path="/login"         element={<LoginPage />} />
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-              {/* Protected routes */}
+              {/* Protected Routes */}
               <Route path="/" element={
                 <ProtectedRoute><NotebooksListPage /></ProtectedRoute>
               }/>
