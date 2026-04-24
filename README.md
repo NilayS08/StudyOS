@@ -4,6 +4,8 @@ A GenAI-powered study assistant that processes documents (PDF, DOCX, PPTX) and g
 
 ## Architecture Overview
 
+For detailed architecture diagrams, see [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Frontend (React 19)                      │
@@ -33,14 +35,15 @@ A GenAI-powered study assistant that processes documents (PDF, DOCX, PPTX) and g
 - **Mock Quizzes**: MCQ, short-answer, and long-answer questions
 - **RAG Chat**: Ask questions about your documents with semantic retrieval from FAISS
 - **Difficulty Calibration**: All content adapts to student's level (Basic/Intermediate/Advanced)
+- **Dark/Light Mode**: Toggle between dark and light themes across all pages (persisted to localStorage)
 
 ## Tech Stack
 
 | Layer     | Technology                          |
 |-----------|-------------------------------------|
-| Frontend  | React 19, Vite 7, Tailwind 4        |
+| Frontend  | React 19, Vite 7, Tailwind 4 (Dark Mode via class strategy) |
 | Backend   | FastAPI, uvicorn, Pydantic          |
-| LLM       | Google Gemini 1.5 Flash/Pro         |
+| LLM       | Google Gemini 2.5 Flash/Pro         |
 | Embeddings| SentenceTransformers (all-MiniLM-L6-v2) |
 | Vector DB | FAISS (IndexFlatIP, CPU)            |
 | Parsing   | PyMuPDF, python-docx, python-pptx  |
